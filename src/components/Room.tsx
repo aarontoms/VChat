@@ -10,11 +10,12 @@ interface MessageData {
     text: string;
 }
 
-const url = 'https://live-catie-vteam-9afb6540.koyeb.app'
-// const url = 'http://127.0.0.1:5000'
+// const url = 'https://live-catie-vteam-9afb6540.koyeb.app'
+const url = 'http://127.0.0.1:5000'
 
 function Chat() {
-    const [username, setUsername] = useState('niggesh');
+    const [username, setUsername] = useState('');
+
     const [messages, setMessages] = useState<MessageData[]>([
         { id: "1", username: 'Alice', text: 'Hello, everyone!' },
         { id: "2", username: 'Bob', text: 'Hey Alice!' },
@@ -28,13 +29,12 @@ function Chat() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username: username.trim().toLowerCase() }),
+            body: JSON.stringify({ username: username }),
         });
         if (!response.ok) {
             console.error('Error', response.statusText);
         }
         else {
-            console.log('Username sent');
             const data = await response.json();
             console.log(data);
         }
@@ -66,39 +66,63 @@ function Chat() {
                 )
             }
             else {
-                console.log('Message sent');
                 const data = await response.json();
                 console.log(data);
             }
         } catch (error) {
             console.error('Error sending message: ', error);
-            setMessages((prevMessages)=>
+            setMessages((prevMessages) =>
                 prevMessages.filter((msg) => msg.id !== newMsg.id)
             )
         }
     };
 
-    // useEffect(() => {
-    //     Swal.fire({
-    //         title: 'Enter your username',
-    //         input: 'text',
-    //         inputPlaceholder: 'Username',
-    //         inputValidator: (value) => {
-    //             if (!value) {
-    //                 return 'Username is required!';
-    //             }
-    //         },
-    //         allowOutsideClick: false,
-    //         allowEscapeKey: false,
-    //         background: '#1e293b',
-    //         color: '#ffffff',
-    //     }).then((result) => {
-    //         if (result.isConfirmed) {
-    //             setUsername(result.value);
-    // postUsername();
-    //         }
-    //     });
-    // }, []);
+    useEffect(() => {
+        Swal.fire({
+            title: 'Enter your password',
+            input: 'password',
+            inputPlaceholder: 'Password',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Password is required!';
+                }
+            },
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            background: '#1e293b',
+            color: '#ffffff',
+        }).then((passwordResult) => {
+            if (passwordResult.isConfirmed) {
+                const password = passwordResult.value.trim();
+                // postPassword(password);  // Perform password validation
+
+                Swal.fire({
+                    title: 'Enter your username',
+                    input: 'text',
+                    inputPlaceholder: 'Username',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Username is required!';
+                        }
+                    },
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    background: '#1e293b',
+                    color: '#ffffff',
+                }).then((usernameResult) => {
+                    if (usernameResult.isConfirmed) {
+                        const username = usernameResult.value.trim().toLowerCase();
+                        setUsername(username);
+                    }
+                });
+            }
+        });
+    }, []);
+    useEffect(() => {
+        if (username) {
+            postUsername();
+        }
+    }, [username]);
 
     return (
         <div className="min-h-lvh min-w-full flex flex-row justify-center bg-gray-900 text-white">

@@ -4,12 +4,12 @@ function Home() {
     const [showJoinForm, setShowJoinForm] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [joinCode, setJoinCode] = useState('');
-    const [joinPassword, setJoinPassword] = useState('');
     const [createPassword, setCreatePassword] = useState('');
 
     const handleJoinRoom = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Joining room:', { joinCode, joinPassword });
+        console.log('Joining room:', { joinCode });
+        window.location.href = `/room/${joinCode}`;
     };
 
     const handleCreateRoom = (e: React.FormEvent) => {
@@ -89,20 +89,6 @@ function Home() {
                                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                                     placeholder="Enter room code"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="roomPassword" className="block text-sm font-medium text-gray-700">
-                                    Password
-                                </label>
-                                <input
-                                    id="roomPassword"
-                                    type="password"
-                                    required
-                                    value={joinPassword}
-                                    onChange={(e) => setJoinPassword(e.target.value)}
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                                    placeholder="Enter room password"
                                 />
                             </div>
                             <div className="flex justify-between">
