@@ -9,7 +9,6 @@ interface MessageData {
     username: string;
     text: string;
 }
-//return the msgid from backend and store in messagedata
 
 const url = 'https://live-catie-vteam-9afb6540.koyeb.app'
 // const url = 'http://127.0.0.1:5000'
@@ -44,12 +43,13 @@ function Chat() {
     const handleSendMessage = async () => {
         if (newMessage.trim() === '') return;
         const newMsg = {
+            id: uuidv4(),
             session_groupid: sessionStorage.getItem('groupid'),
             username,
             text: newMessage,
         };
         setNewMessage('');
-        setMessages((prevMessages) => [...prevMessages, { id: uuidv4(), username, text: newMessage }]);
+        setMessages((prevMessages) => [...prevMessages, newMsg]);
 
         try {
             const response = await fetch(`${url}/${id}/send`, {
@@ -61,7 +61,9 @@ function Chat() {
             })
             if (!response.ok) {
                 console.error('Error', response.statusText);
-
+                setMessages((prevMessages) =>
+                    prevMessages.filter((msg) => msg.id !== newMsg.id)
+                )
             }
             else {
                 console.log('Message sent');
@@ -70,10 +72,9 @@ function Chat() {
             }
         } catch (error) {
             console.error('Error sending message: ', error);
-
-            setMessages((prevMessages) =>
-                prevMessages.filter((msg, index) => index !== prevMessages.length - 1)
-            );
+            setMessages((prevMessages)=>
+                prevMessages.filter((msg) => msg.id !== newMsg.id)
+            )
         }
     };
 
