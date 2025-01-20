@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import Message from './Message';
 import { useParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 interface MessageData {
+    id: string;
     username: string;
     text: string;
 }
@@ -15,36 +17,64 @@ const url = 'https://live-catie-vteam-9afb6540.koyeb.app'
 function Chat() {
     const [username, setUsername] = useState('niggesh');
     const [messages, setMessages] = useState<MessageData[]>([
-        { username: 'Alice', text: 'Hello, everyone!' },
-        { username: 'Bob', text: 'Hey Alice!' },
+        { id: "1", username: 'Alice', text: 'Hello, everyone!' },
+        { id: "2", username: 'Bob', text: 'Hey Alice!' },
     ]);
     const [newMessage, setNewMessage] = useState('');
     const { id } = useParams();
-    
-    const handleSendMessage = () => {
+
+    const postUsername = async () => {
+        const response = await fetch(`${url}/${id}/postname`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username: username.trim().toLowerCase() }),
+        });
+        if (!response.ok) {
+            console.error('Error', response.statusText);
+        }
+        else {
+            console.log('Username sent');
+            const data = await response.json();
+            console.log(data);
+        }
+    }
+
+    const handleSendMessage = async () => {
         if (newMessage.trim() === '') return;
         const newMsg = {
             session_groupid: sessionStorage.getItem('groupid'),
             username,
             text: newMessage,
         };
-        setMessages([...messages, { ...newMsg}]);
         setNewMessage('');
+        setMessages((prevMessages) => [...prevMessages, { id: uuidv4(), username, text: newMessage }]);
 
-        fetch(`${url}/${id}/send`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(newMsg),
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log("successfully sent")
+        try {
+            const response = await fetch(`${url}/${id}/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newMsg),
             })
-            .catch(error => {
-                console.error('Error posting message:', error);
-            });
+            if (!response.ok) {
+                console.error('Error', response.statusText);
+
+            }
+            else {
+                console.log('Message sent');
+                const data = await response.json();
+                console.log(data);
+            }
+        } catch (error) {
+            console.error('Error sending message: ', error);
+
+            setMessages((prevMessages) =>
+                prevMessages.filter((msg, index) => index !== prevMessages.length - 1)
+            );
+        }
     };
 
     // useEffect(() => {
@@ -64,6 +94,7 @@ function Chat() {
     //     }).then((result) => {
     //         if (result.isConfirmed) {
     //             setUsername(result.value);
+    // postUsername();
     //         }
     //     });
     // }, []);
@@ -97,6 +128,10 @@ function Chat() {
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     placeholder="Type a message..."
                                     className="flex-1 px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none"
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter")
+                                            handleSendMessage();
+                                    }}
                                 />
                                 <button
                                     onClick={handleSendMessage}
