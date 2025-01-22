@@ -23,20 +23,17 @@ function Chat() {
         { id: "2", username: 'Bob', text: 'Hey Alice!' },
     ]);
     const [newMessage, setNewMessage] = useState('');
-    const { groupid } = useParams();
+    const { roomid } = useParams();
 
     useEffect(() => {
-        if (!groupid) {
-            // window.location.href = '/';
-        }
-        socket.on(`${groupid}_update`, (data) => {
+        socket.on(`${roomid}_joined`, (data) => {
             setJoinedUsers(data.joined_users);
         });
-    }, [groupid, socket]);
+    }, [roomid, socket]);
 
     const postPassword = async (password: string) => {
         try {
-            const response = await fetch(`${url}/${groupid}/postpassword`, {
+            const response = await fetch(`${url}/${roomid}/postpassword`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -56,14 +53,14 @@ function Chat() {
         }
     };
 
-    const postUsername = async () => {
+    const postUsername = async (name: string) => {
         const userid = uuidv4();
-        const response = await fetch(`${url}/${groupid}/postname`, {
+        const response = await fetch(`${url}/${roomid}/postname`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username: username, userid: userid }),
+            body: JSON.stringify({ username: name, userid: userid }),
         });
         if (!response.ok) {
             console.error('Error', response.statusText);
@@ -76,78 +73,95 @@ function Chat() {
     }
 
     useEffect(() => {
-        Swal.fire({
-            title: 'Enter room password',
-            input: 'password',
-            inputPlaceholder: 'Password',
-            inputValidator: (value) => {
-                if (!value) {
-                    return 'Password is required!';
-                }
-            },
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            background: '#1e293b',
-            color: '#ffffff',
-        }).then(async (passwordResult) => {
-            if (passwordResult.isConfirmed) {
-                const password = passwordResult.value.trim();
-                const res = await postPassword(password);
-                if (res.status == 200) {
-                    Swal.fire({
-                        title: 'Enter your username',
-                        input: 'text',
-                        inputPlaceholder: 'Username',
-                        inputValidator: (value) => {
-                            if (!value) {
-                                return 'Username is required!';
-                            }
-                        },
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        background: '#1e293b',
-                        color: '#ffffff',
-                    }).then((usernameResult) => {
-                        if (usernameResult.isConfirmed) {
-                            const username = usernameResult.value.trim().toLowerCase();
-                            setUsername(username);
-                        }
-                    });
-                }
-                else if (res.status == 401) {
-                    Swal.fire({
-                        title: 'Wrong password!',
-                        icon: 'error',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                    }).then(() => {
-                        window.location.reload();
-                    });
-                }
-                else if (res.status == 404) {
-                    Swal.fire({
-                        title: 'Room Not Found - Room may have expired!',
-                        icon: 'error',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                    }).then(() => {
-                        window.location.href = '/';
-                    });
-                }
+        if (roomid) {
+            if (sessionStorage.getItem(roomid)) {
+                const userid = sessionStorage.getItem(roomid);
+                console.log(userid);
+                fetch(`${url}/${roomid}/getname`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userid: userid }),
+                })
+                .then((response) => response.json())
+                .then((data) => setUsername(data.username))
+                .catch((error) => console.error('Error:', error));
             }
-        });
-    }, []);
-    useEffect(() => {
-        if (username) {
-            postUsername();
+            else {
+                Swal.fire({
+                    title: 'Enter room password',
+                    input: 'password',
+                    inputPlaceholder: 'Password',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Password is required!';
+                        }
+                    },
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    background: '#1e293b',
+                    color: '#ffffff',
+                }).then(async (passwordResult) => {
+                    if (passwordResult.isConfirmed) {
+                        const password = passwordResult.value.trim();
+                        const res = await postPassword(password);
+                        if (res.status == 200) {
+                            Swal.fire({
+                                title: 'Enter your username',
+                                input: 'text',
+                                inputPlaceholder: 'Username',
+                                inputValidator: (value) => {
+                                    if (!value) {
+                                        return 'Username is required!';
+                                    }
+                                },
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                background: '#1e293b',
+                                color: '#ffffff',
+                            }).then(async (usernameResult) => {
+                                if (usernameResult.isConfirmed) {
+                                    const username = usernameResult.value.trim().toLowerCase();
+                                    setUsername(username);
+                                    postUsername(usernameResult.value.trim().toLowerCase());
+                                }
+                            });
+                        }
+                        else if (res.status == 401) {
+                            Swal.fire({
+                                title: 'Wrong password!',
+                                icon: 'error',
+                                background: '#1e293b',
+                                color: '#ffffff',
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        }
+                        else if (res.status == 404) {
+                            Swal.fire({
+                                title: 'Room Not Found - Room may have expired!',
+                                icon: 'error',
+                                background: '#1e293b',
+                                color: '#ffffff',
+                            }).then(() => {
+                                window.location.href = '/';
+                            });
+                        }
+                    }
+                });
+            }
         }
-    }, [username]);
+    }, [roomid]);
+    useEffect(() => {
+        console.log(joinedUsers);
+    }, ["Users: ", joinedUsers]);
 
     const handleSendMessage = async () => {
         if (newMessage.trim() === '') return;
         const newMsg = {
             id: uuidv4(),
-            session_groupid: sessionStorage.getItem('groupid'),
+            session_roomid: sessionStorage.getItem('roomid'),
             username,
             text: newMessage,
         };
@@ -155,7 +169,7 @@ function Chat() {
         setMessages((prevMessages) => [...prevMessages, newMsg]);
 
         try {
-            const response = await fetch(`${url}/${groupid}/send`, {
+            const response = await fetch(`${url}/${roomid}/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
