@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 import Message from './Message';
 import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { io } from 'socket.io-client';
 import url from './url';
 
 interface MessageData {
@@ -10,21 +11,32 @@ interface MessageData {
     username: string;
     text: string;
 }
-
+//when tab is closed detect and remove user from chat
 
 function Chat() {
-    const [username, setUsername] = useState('');
+    const socket = io(url);
 
+    const [username, setUsername] = useState('');
+    const [joinedUsers, setJoinedUsers] = useState<string[]>([]);
     const [messages, setMessages] = useState<MessageData[]>([
         { id: "1", username: 'Alice', text: 'Hello, everyone!' },
         { id: "2", username: 'Bob', text: 'Hey Alice!' },
     ]);
     const [newMessage, setNewMessage] = useState('');
-    const { id } = useParams();
+    const { groupid } = useParams();
+
+    useEffect(() => {
+        if (!groupid) {
+            // window.location.href = '/';
+        }
+        socket.on(`${groupid}_update`, (data) => {
+            setJoinedUsers(data.joined_users);
+        });
+    }, [groupid, socket]);
 
     const postPassword = async (password: string) => {
         try {
-            const response = await fetch(`${url}/${id}/postpassword`, {
+            const response = await fetch(`${url}/${groupid}/postpassword`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,18 +57,20 @@ function Chat() {
     };
 
     const postUsername = async () => {
-        const response = await fetch(`${url}/${id}/postname`, {
+        const userid = uuidv4();
+        const response = await fetch(`${url}/${groupid}/postname`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username: username }),
+            body: JSON.stringify({ username: username, userid: userid }),
         });
         if (!response.ok) {
             console.error('Error', response.statusText);
         }
         else {
             const data = await response.json();
+            sessionStorage.setItem(data.roomid, data.userid);
             console.log(data);
         }
     }
@@ -112,7 +126,7 @@ function Chat() {
                 }
                 else if (res.status == 404) {
                     Swal.fire({
-                        title: 'Room not found!',
+                        title: 'Room Not Found - Room may have expired!',
                         icon: 'error',
                         background: '#1e293b',
                         color: '#ffffff',
@@ -141,7 +155,7 @@ function Chat() {
         setMessages((prevMessages) => [...prevMessages, newMsg]);
 
         try {
-            const response = await fetch(`${url}/${id}/send`, {
+            const response = await fetch(`${url}/${groupid}/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -166,22 +180,28 @@ function Chat() {
         }
     };
 
-
     return (
         <div className="min-h-lvh min-w-full flex flex-row justify-center bg-gray-900 text-white">
             {!username ? (
                 <h1 className="text-4xl p-20">Loading...</h1>
             ) : (
                 <div className='h-screen w-full flex justify-around gap-px'>
-                    <div className='w-1/3 bg-gray-600 my-10 p-4'>
+                    <div className='w-1/3 bg-gray-600 my-10 p-4 overflow-auto scrollbar-none'>
                         Joined users in chat
+                        <ul>
+                            {joinedUsers.map((user, index) => (
+                                <li key={index} className="text-white py-1">
+                                    {JSON.parse(user).username}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                     <div className='w-2/3 bg-gray-600 my-10 flex flex-col'>
                         bye
                         <div className="flex-1 p-4 space-y-2 overflow-auto scrollbar-none scrollbar-thumb-gray-500 scrollbar-track-gray-200">
                             {messages.map((msg) => (
                                 <Message
-                                    // key={msg.id}
+                                    key={msg.id}
                                     username={msg.username}
                                     text={msg.text}
                                     isOwnMessage={msg.username === username}
