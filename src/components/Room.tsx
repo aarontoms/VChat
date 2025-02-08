@@ -68,7 +68,6 @@ function Chat() {
         else {
             const data = await response.json();
             sessionStorage.setItem(data.roomid, data.userid);
-            console.log(data);
         }
     }
 
@@ -76,7 +75,6 @@ function Chat() {
         if (roomid) {
             if (sessionStorage.getItem(roomid)) {
                 const userid = sessionStorage.getItem(roomid);
-                console.log(userid);
                 fetch(`${url}/${roomid}/getname`, {
                     method: 'POST',
                     headers: {
@@ -85,7 +83,10 @@ function Chat() {
                     body: JSON.stringify({ userid: userid }),
                 })
                 .then((response) => response.json())
-                .then((data) => setUsername(data.username))
+                .then((data) => {
+                    setUsername(data.username)
+                    setJoinedUsers(data.users)
+                })
                 .catch((error) => console.error('Error:', error));
             }
             else {
@@ -153,9 +154,10 @@ function Chat() {
             }
         }
     }, [roomid]);
-    useEffect(() => {
-        console.log(joinedUsers);
-    }, ["Users: ", joinedUsers]);
+    
+    // useEffect(() => {
+    //     console.log("hey: ", joinedUsers);
+    // }, [joinedUsers]);
 
     const handleSendMessage = async () => {
         if (newMessage.trim() === '') return;
