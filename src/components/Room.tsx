@@ -245,19 +245,29 @@ function Chat() {
                 <h1 className="text-4xl p-20">Loading...</h1>
             ) : (
                 <div className='h-screen w-full flex justify-around gap-px'>
-                    <div className='w-1/3 bg-gray-600 my-10 p-4 overflow-auto scrollbar-none'>
-                        Joined users in chat
-                        <ul>
-                            {joinedUsers.map((user, index) => (
-                                <li key={index} className="text-white py-1">
-                                    {JSON.parse(user).username}
-                                </li>
-                            ))}
+                    <div className="w-1/3 bg-gray-700 my-10 p-6 rounded-2xl shadow-lg overflow-auto scrollbar-none">
+                        <h2 className="text-xl font-semibold text-white mb-4 text-center">
+                            Joined Users
+                        </h2>
+                        <ul className="space-y-2">
+                            {joinedUsers.map((user, index) => {
+                                const parsedUser = JSON.parse(user);
+                                const isCurrentUser = parsedUser.username === username;
+                                return (
+                                    <li
+                                        key={index}
+                                        className={`py-2 px-4 rounded-lg font-medium text-lg text-white 
+                                            ${isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-800"}`
+                                        }>
+                                        {isCurrentUser ? "👤 " : "🔹 "}
+                                        {parsedUser.username}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
-                    {/* {username} */}
-                    <div className='w-2/3 bg-gray-600 my-10 flex flex-col'>
-                        <div className="flex-1 p-4 space-y-2 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200">
+                    <div className="w-3/4 bg-gray-700 my-10 flex flex-col rounded-2xl shadow-lg">
+                        <div className="flex-1 p-4 space-y-3 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-300">
                             {messages.map((msg) => (
                                 <Message
                                     key={msg.id}
@@ -268,22 +278,22 @@ function Chat() {
                             ))}
                             <div ref={messagesEndRef} />
                         </div>
-                        <div className="p-4 bg-gray-800">
+
+                        <div className="p-4 bg-gray-800 rounded-b-2xl">
                             <div className="flex items-center space-x-4">
                                 <input
                                     type="text"
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
                                     placeholder="Type a message..."
-                                    className="flex-1 px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none"
+                                    className="flex-1 px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     onKeyDown={(e) => {
-                                        if (e.key === "Enter")
-                                            handleSendMessage();
+                                        if (e.key === "Enter") handleSendMessage();
                                     }}
                                 />
                                 <button
                                     onClick={handleSendMessage}
-                                    className="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600"
+                                    className="px-5 py-3 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition duration-200"
                                 >
                                     Send
                                 </button>
