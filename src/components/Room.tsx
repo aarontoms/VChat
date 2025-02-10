@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 import Message from './Message';
 import { useParams } from 'react-router-dom';
@@ -8,7 +8,7 @@ import url from './url';
 
 interface MessageData {
     id: string;
-    username: string;
+    sender: string;
     text: string;
 }
 //when tab is closed detect and remove user from chat
@@ -18,18 +18,43 @@ function Chat() {
 
     const [username, setUsername] = useState('');
     const [joinedUsers, setJoinedUsers] = useState<string[]>([]);
-    const [messages, setMessages] = useState<MessageData[]>([
-        { id: "1", username: 'Alice', text: 'Hello, everyone!' },
-        { id: "2", username: 'Bob', text: 'Hey Alice!' },
-    ]);
+    const [messages, setMessages] = useState<MessageData[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const { roomid } = useParams();
 
+    const messagesEndRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        socket.on(`${roomid}_joined`, (data) => {
-            setJoinedUsers(data.joined_users);
-        });
-    }, [roomid, socket]);
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    useEffect(() => {
+        if (username) {
+
+            const handleJoinedUsers = (data: any) => {
+                setJoinedUsers(data.joined_users);
+            }
+            const handleMessage = (data: { messageid: any; sender: string; message: any; time: any; }) => {
+                const newMsg = {
+                    id: data.messageid,
+                    sender: data.sender,
+                    text: data.message,
+                    time: data.time
+                };
+                if (data.sender !== username) {
+                    setMessages((prevMessages) => [...prevMessages, newMsg]);
+                }
+                console.log("data: ", data);
+            };
+
+            socket.on(`${roomid}_message`, handleMessage);
+            socket.on(`${roomid}_joined`, handleJoinedUsers);
+
+            return () => {
+                socket.off(`${roomid}_joined`, handleJoinedUsers);
+                socket.off(`${roomid}_message`, handleMessage);
+            };
+        }
+    }, [roomid, username, socket]);
 
     const postPassword = async (password: string) => {
         try {
@@ -82,12 +107,30 @@ function Chat() {
                     },
                     body: JSON.stringify({ userid: userid }),
                 })
-                .then((response) => response.json())
-                .then((data) => {
-                    setUsername(data.username)
-                    setJoinedUsers(data.users)
-                })
-                .catch((error) => console.error('Error:', error));
+                    .then((response) => response.json())
+                    .then((data) => {
+                        setUsername(data.username)
+                        setJoinedUsers(data.users)
+                        fetch(`${url}/${roomid}/getmessages`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ username: data.username }),
+                        })
+                            .then((response) => response.json())
+                            .then((data) => {
+                                const newMessages = data.messages.map((msg: any) => ({
+                                    id: msg.messageid,
+                                    sender: msg.sender,
+                                    text: msg.message,
+                                    time: msg.time,
+                                }))
+                                    .sort((a: { time: any; }, b: { time: any; }) => new Date(`1970/01/01 ${a.time}`).getTime() - new Date(`1970/01/01 ${b.time}`).getTime());
+                                setMessages(newMessages);
+                            })
+                    })
+                    .catch((error) => console.error('Error:', error));
             }
             else {
                 Swal.fire({
@@ -154,7 +197,7 @@ function Chat() {
             }
         }
     }, [roomid]);
-    
+
     // useEffect(() => {
     //     console.log("hey: ", joinedUsers);
     // }, [joinedUsers]);
@@ -163,9 +206,9 @@ function Chat() {
         if (newMessage.trim() === '') return;
         const newMsg = {
             id: uuidv4(),
-            session_roomid: sessionStorage.getItem('roomid'),
-            username,
+            sender: username,
             text: newMessage,
+            time: new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
         };
         setNewMessage('');
         setMessages((prevMessages) => [...prevMessages, newMsg]);
@@ -212,17 +255,18 @@ function Chat() {
                             ))}
                         </ul>
                     </div>
+                    {/* {username} */}
                     <div className='w-2/3 bg-gray-600 my-10 flex flex-col'>
-                        bye
-                        <div className="flex-1 p-4 space-y-2 overflow-auto scrollbar-none scrollbar-thumb-gray-500 scrollbar-track-gray-200">
+                        <div className="flex-1 p-4 space-y-2 overflow-auto scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-200">
                             {messages.map((msg) => (
                                 <Message
                                     key={msg.id}
-                                    username={msg.username}
+                                    username={msg.sender}
                                     text={msg.text}
-                                    isOwnMessage={msg.username === username}
+                                    isOwnMessage={msg.sender === username}
                                 />
                             ))}
+                            <div ref={messagesEndRef} />
                         </div>
                         <div className="p-4 bg-gray-800">
                             <div className="flex items-center space-x-4">
