@@ -31,9 +31,41 @@ Users can join chat rooms using a shared password and chat instantly with others
 - Share the **room link** (e.g., `https://vazhachat.vercel.app/room/<roomid>`) with friends.
 - Anyone using the same room ID can join and chat together.
 
-## 🛠️ Development Guide
+# 📚 Development Guide
+
+## 📦 Setup Instructions
 
 ### 1. Clone the Repository
+
 ```bash
-git clone https://github.com/your-username/vazhachat.git
-cd vazhachat
+git clone https://github.com/aarontoms/VChat.git
+cd VChat
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Start Development Server
+
+```bash
+npm run dev
+```
+
+### 4. Build for Production
+
+```bash
+npm run build
+```
+
+## 🔧 Project Structure
+
+```plaintext
+src/
+├── components/     # Reusable components like Message, Home, Room
+├── App.tsx         # Main app with route definitions
+├── main.tsx        # Entry point
+├── index.css       # TailwindCSS styles
+```
