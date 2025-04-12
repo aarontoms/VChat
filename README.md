@@ -1,50 +1,39 @@
-# React + TypeScript + Vite
+# VazhaChat 🍃
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**VazhaChat** is a minimal, real-time group chat web app built with **React**, **TypeScript**, **Vite**, and **TailwindCSS**.  
+Users can join chat rooms using a shared password and chat instantly with others.
 
-Currently, two official plugins are available:
+## 🚀 Features
+- Create or join a chat room by entering a room ID.
+- Real-time group messaging.
+- Temporary messages (auto-delete logic can be added).
+- Clean and modern UI with TailwindCSS.
+- Auto-scroll to latest message.
+- Visual distinction between own messages and others'.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🖥️ Tech Stack
+- **Frontend**: React + TypeScript + Vite
+- **Styling**: TailwindCSS
+- **Deployment**: Vercel
 
-## Expanding the ESLint configuration
+# 📚 Usage Guide
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## 🏠 Home Page
+- Create a room and set a password(Note: Other users will need this password to enter your room).
+  OR
+- Enter the **Room ID** (visible in the owners URL e.g., `https://vazhachat.vercel.app/room/<roomid>`). Click the **Join** button to enter the chat room.
 
-- Configure the top-level `parserOptions` property like this:
+## 💬 Inside the Chat Room
+- You will see all the messages exchanged in real-time.
+- Type a message in the input field and press **Enter**.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## 🔗 Sharing
+- Share the **room link** (e.g., `https://vazhachat.vercel.app/room/<roomid>`) with friends.
+- Anyone using the same room ID can join and chat together.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## 🛠️ Development Guide
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/vazhachat.git
+cd vazhachat
